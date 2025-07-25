@@ -1,5 +1,5 @@
 {
-  "name": "auto-import",
+  "name": "ts-import-check",
   "module": "src/index.ts",
   "devDependencies": {
     "@types/bun": "latest",
