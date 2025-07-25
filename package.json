@@ -9,8 +9,5 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "type": "module",
-  "dependencies": {
-    "motion": "^12.23.9"
-  }
+  "type": "module"
 }
