@@ -163,7 +163,10 @@ const groupImportsByModule = (
   );
 };
 
-const detectMissingImports = (filePath: string): MissingImport[] => {
+const detectMissingImports = (
+  filePath: string,
+  rawCode?: string
+): MissingImport[] => {
   const compilerOptions: CompilerOptions = {
     target: ScriptTarget.ESNext,
     module: ModuleKind.ESNext,
@@ -181,10 +184,14 @@ const detectMissingImports = (filePath: string): MissingImport[] => {
   const servicesHost: LanguageServiceHost = {
     getScriptFileNames: () => [filePath],
     getScriptVersion: () => "0",
-    getScriptSnapshot: (fileName) =>
-      !sys.fileExists(fileName)
+    getScriptSnapshot: (fileName) => {
+      if (rawCode && fileName === filePath) {
+        return ScriptSnapshot.fromString(rawCode);
+      }
+      return !sys.fileExists(fileName)
         ? undefined
-        : ScriptSnapshot.fromString(sys.readFile(fileName)!),
+        : ScriptSnapshot.fromString(sys.readFile(fileName)!);
+    },
     getCurrentDirectory: () => process.cwd(),
     getCompilationSettings: () => compilerOptions,
     getDefaultLibFileName: (options) => getDefaultLibFilePath(options),
@@ -254,10 +261,11 @@ const formatGroupedImport = (grouped: GroupedImport): string => {
   return `import ${parts.join(", ")} from "${grouped.module}";`;
 };
 
-const analyzeFile = (filePath: string): void => {
-  console.log(`\nAnalyzing: ${basename(filePath)}\n`);
+const analyzeFile = (filePath: string, rawCode?: string): void => {
+  const displayName = rawCode ? "raw code" : basename(filePath);
+  console.log(`\nAnalyzing: ${displayName}\n`);
 
-  const missingImports = detectMissingImports(filePath);
+  const missingImports = detectMissingImports(filePath, rawCode);
 
   if (missingImports.length === 0) {
     console.log("[TS] No missing imports detected!");
@@ -291,6 +299,14 @@ const analyzeFile = (filePath: string): void => {
 };
 
 if (process.argv[2]) {
-  const filePath = resolve(process.argv[2]);
-  analyzeFile(filePath);
+  const arg = process.argv[2];
+
+  if (!/\.(ts|tsx|js|jsx)$/.test(arg)) {
+    const rawCode = arg;
+    const tempFilePath = resolve(process.cwd(), "temp.ts");
+    analyzeFile(tempFilePath, rawCode);
+  } else {
+    const filePath = resolve(arg);
+    analyzeFile(filePath);
+  }
 }
