@@ -17,6 +17,7 @@ import {
   type LanguageService,
   type LanguageServiceHost,
 } from "typescript";
+import { parseArgs } from "util";
 
 type MissingImport = {
   symbol: string;
@@ -298,15 +299,47 @@ const analyzeFile = (filePath: string, rawCode?: string): void => {
   }
 };
 
-if (process.argv[2]) {
-  const arg = process.argv[2];
+const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    code: {
+      type: "string",
+      short: "c",
+      description: "Analyze raw TypeScript/JavaScript code directly",
+    },
+    help: {
+      type: "boolean",
+      short: "h",
+      description: "Show help message",
+    },
+  },
+  allowPositionals: true,
+});
 
-  if (!/\.(ts|tsx|js|jsx)$/.test(arg)) {
-    const rawCode = arg;
-    const tempFilePath = resolve(process.cwd(), "temp.ts");
-    analyzeFile(tempFilePath, rawCode);
-  } else {
-    const filePath = resolve(arg);
-    analyzeFile(filePath);
-  }
+if (values.help) {
+  console.log(`
+Usage: auto-import [options] [file]
+
+Options:
+  -c, --code <code>    Analyze raw TypeScript/JavaScript code
+  -h, --help           Show this help message
+
+Examples:
+  auto-import src/app.ts
+  auto-import --code "const x = React.useState()"
+  auto-import -c "import { motion } from 'motion'"
+`);
+  process.exit(0);
+}
+
+if (values.code) {
+  const tempFilePath = resolve(process.cwd(), "temp.ts");
+  analyzeFile(tempFilePath, values.code);
+} else if (positionals[0]) {
+  const filePath = resolve(positionals[0]);
+  analyzeFile(filePath);
+} else {
+  console.error("[ERROR]: Please provide a file path or use --code option");
+  console.log("Use --help for usage information");
+  process.exit(1);
 }
