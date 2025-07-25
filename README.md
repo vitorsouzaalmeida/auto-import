@@ -34,5 +34,9 @@ bun install
 ## Usage
 
 ```bash
-bun run c example.tsx
+# to check a file
+bun run src/index.ts example.tsx
+
+# to check raw code
+bun run src/index.ts -c "const x = useState(); const y = motion.div"
 ```

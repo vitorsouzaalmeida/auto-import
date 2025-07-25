@@ -1,9 +1,6 @@
 {
   "name": "auto-import",
   "module": "src/index.ts",
-  "scripts": {
-    "c": "bun run src/index.ts"
-  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^24.1.0",

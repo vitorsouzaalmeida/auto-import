@@ -17,6 +17,7 @@ import {
   type LanguageService,
   type LanguageServiceHost,
 } from "typescript";
+import { parseArgs } from "util";
 
 type MissingImport = {
   symbol: string;
@@ -163,7 +164,10 @@ const groupImportsByModule = (
   );
 };
 
-const detectMissingImports = (filePath: string): MissingImport[] => {
+const detectMissingImports = (
+  filePath: string,
+  rawCode?: string
+): MissingImport[] => {
   const compilerOptions: CompilerOptions = {
     target: ScriptTarget.ESNext,
     module: ModuleKind.ESNext,
@@ -181,10 +185,14 @@ const detectMissingImports = (filePath: string): MissingImport[] => {
   const servicesHost: LanguageServiceHost = {
     getScriptFileNames: () => [filePath],
     getScriptVersion: () => "0",
-    getScriptSnapshot: (fileName) =>
-      !sys.fileExists(fileName)
+    getScriptSnapshot: (fileName) => {
+      if (rawCode && fileName === filePath) {
+        return ScriptSnapshot.fromString(rawCode);
+      }
+      return !sys.fileExists(fileName)
         ? undefined
-        : ScriptSnapshot.fromString(sys.readFile(fileName)!),
+        : ScriptSnapshot.fromString(sys.readFile(fileName)!);
+    },
     getCurrentDirectory: () => process.cwd(),
     getCompilationSettings: () => compilerOptions,
     getDefaultLibFileName: (options) => getDefaultLibFilePath(options),
@@ -254,10 +262,11 @@ const formatGroupedImport = (grouped: GroupedImport): string => {
   return `import ${parts.join(", ")} from "${grouped.module}";`;
 };
 
-const analyzeFile = (filePath: string): void => {
-  console.log(`\nAnalyzing: ${basename(filePath)}\n`);
+const analyzeFile = (filePath: string, rawCode?: string): void => {
+  const displayName = rawCode ? "raw code" : basename(filePath);
+  console.log(`\nAnalyzing: ${displayName}\n`);
 
-  const missingImports = detectMissingImports(filePath);
+  const missingImports = detectMissingImports(filePath, rawCode);
 
   if (missingImports.length === 0) {
     console.log("[TS] No missing imports detected!");
@@ -290,7 +299,47 @@ const analyzeFile = (filePath: string): void => {
   }
 };
 
-if (process.argv[2]) {
-  const filePath = resolve(process.argv[2]);
+const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    code: {
+      type: "string",
+      short: "c",
+      description: "Analyze raw TypeScript/JavaScript code directly",
+    },
+    help: {
+      type: "boolean",
+      short: "h",
+      description: "Show help message",
+    },
+  },
+  allowPositionals: true,
+});
+
+if (values.help) {
+  console.log(`
+Usage: auto-import [options] [file]
+
+Options:
+  -c, --code <code>    Analyze raw TypeScript/JavaScript code
+  -h, --help           Show this help message
+
+Examples:
+  auto-import src/app.ts
+  auto-import --code "const x = React.useState()"
+  auto-import -c "import { motion } from 'motion'"
+`);
+  process.exit(0);
+}
+
+if (values.code) {
+  const tempFilePath = resolve(process.cwd(), "temp.ts");
+  analyzeFile(tempFilePath, values.code);
+} else if (positionals[0]) {
+  const filePath = resolve(positionals[0]);
   analyzeFile(filePath);
+} else {
+  console.error("[ERROR]: Please provide a file path or use --code option");
+  console.log("Use --help for usage information");
+  process.exit(1);
 }
