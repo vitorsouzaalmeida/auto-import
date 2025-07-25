@@ -1,0 +1,19 @@
+{
+  "name": "auto-import",
+  "module": "src/index.ts",
+  "scripts": {
+    "c": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.1.0",
+    "@types/react": "^19.1.8"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "motion": "^12.23.9"
+  }
+}
