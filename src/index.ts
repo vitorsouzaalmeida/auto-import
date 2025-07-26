@@ -180,6 +180,7 @@ const detectMissingImports = (
     strict: true,
     skipLibCheck: true,
     noFallthroughCasesInSwitch: true,
+    types: ["lucide-react"],
   };
 
   const servicesHost: LanguageServiceHost = {

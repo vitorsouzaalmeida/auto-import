@@ -7,6 +7,8 @@ const MyComponent = () => {
   return (
     <div>
       <motion.ul animate={{ rotate: 360 }} />
+      <Heart />
+      <Car />
       <h1>Count: {count}</h1>
       <button onClick={() => setCount(count + 1)}>Increment</button>
     </div>

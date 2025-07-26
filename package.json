@@ -9,5 +9,9 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "lucide-react": "^0.525.0",
+    "motion": "^12.23.9"
+  }
 }
